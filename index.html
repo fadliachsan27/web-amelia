@@ -1292,6 +1292,26 @@
       font-size: 1.1rem;
       transition: 0.2s;
     }
+
+    .btn-block {
+      background: #607d8b;
+      color: #fff;
+    }
+
+    /* Warna abu-abu untuk blokir */
+    .btn-unblock {
+      background: #4caf50;
+      color: #fff;
+    }
+
+    /* Warna hijau untuk buka blokir */
+    .bg-blocked {
+      background: #ffebee;
+      color: #f44336;
+      border: 1px solid #ffcdd2;
+    }
+
+    /* Label status blokir */
   </style>
 </head>
 
@@ -1585,36 +1605,32 @@
       const pass = btoa(document.getElementById('login-pass').value);
       const msg = document.getElementById('login-msg');
 
-      if (!user || !pass) {
-        msg.textContent = "❌ Isi username dan password!";
-        return;
-      }
-
       try {
         const snap = await get(ref(db, 'users/' + user));
         if (snap.exists()) {
           const userData = snap.val();
+
+          // CEK APAKAH DIBLOKIR
+          if (userData.isBlocked === true) {
+            msg.className = "auth-msg error";
+            msg.textContent = '🚫 Akun Anda ditangguhkan oleh Admin.';
+            return;
+          }
+
           if (userData.password === pass) {
             localStorage.setItem('amelia_session', JSON.stringify(userData));
             msg.className = "auth-msg success";
             msg.textContent = '✅ Berhasil!';
-
-            setTimeout(() => {
-              document.getElementById('login-screen').classList.add('hidden');
-              document.getElementById('nav-username').textContent = '👤 ' + (userData.name || userData.username);
-              if (userData.role === 'admin') {
-                document.getElementById('admin-icon-btn').style.display = 'inline-block';
-              }
-            }, 1000);
+            setTimeout(() => location.reload(), 1000);
           } else {
-            msg.textContent = '❌ Password salah!';
+            msg.className = "auth-msg error";
+            msg.textContent = '❌ Password Salah!';
           }
         } else {
+          msg.className = "auth-msg error";
           msg.textContent = '❌ Username tidak ditemukan!';
         }
-      } catch (e) {
-        msg.textContent = '❌ Error database.';
-      }
+      } catch (e) { console.error(e); }
     };
 
     // 6. FUNGSI REGISTER & OTP
@@ -1668,6 +1684,7 @@
     };
 
     // 8. ADMIN FEATURES
+    // --- FUNGSI LOAD DAFTAR USER (DENGAN FITUR BLOKIR) ---
     window.loadUserList = async function () {
       const listDiv = document.getElementById('admin-user-list');
       try {
@@ -1678,7 +1695,7 @@
           <thead>
             <tr>
               <th>Username</th>
-              <th>Role</th>
+              <th>Status/Role</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -1691,23 +1708,47 @@
             const user = users[key];
             const isSelf = key === currentLogin;
             const isAdmin = user.role === 'admin';
+            const isBlocked = user.isBlocked === true; // Ambil status blokir
 
             html += `
           <tr>
             <td><strong>${key}</strong></td>
-            <td><span class="badge ${isAdmin ? 'bg-admin' : 'bg-user'}">${user.role}</span></td>
             <td>
-              <button class="btn-info" onclick="doDetailUser('${key}')" title="Detail">👁️</button>
-              ${!isSelf ? `
-                <button class="btn-admin" onclick="doMakeAdmin('${key}', '${isAdmin ? 'user' : 'admin'}')" title="${isAdmin ? 'Jadikan User' : 'Jadikan Admin'}">⭐</button>
-                <button class="btn-delete" onclick="doDeleteUser('${key}')" title="Hapus">🗑️</button>
-              ` : '<i>(Anda)</i>'}
+              <span class="badge ${isBlocked ? 'bg-blocked' : (isAdmin ? 'bg-admin' : 'bg-user')}">
+                ${isBlocked ? '🚫 DIBLOKIR' : user.role}
+              </span>
+            </td>
+            <td>
+              <div class="action-group">
+                <button class="btn-action btn-info" onclick="doDetailUser('${key}')" title="Detail">👁️</button>
+                ${!isSelf ? `
+                  <button class="btn-action ${isBlocked ? 'btn-unblock' : 'btn-block'}" 
+                          onclick="doToggleBlock('${key}', ${isBlocked})" 
+                          title="${isBlocked ? 'Buka Blokir' : 'Blokir User'}">
+                    ${isBlocked ? '🔓' : '🚫'}
+                  </button>
+                  <button class="btn-action btn-admin" onclick="doMakeAdmin('${key}', '${isAdmin ? 'user' : 'admin'}')" title="Ubah Role">⭐</button>
+                  <button class="btn-action btn-delete" onclick="doDeleteUser('${key}')" title="Hapus">🗑️</button>
+                ` : '<i style="font-size:0.7rem;">(Anda)</i>'}
+              </div>
             </td>
           </tr>`;
           }
           listDiv.innerHTML = html + '</tbody></table>';
         }
       } catch (e) { console.error(e); }
+    };
+
+    // --- FUNGSI AKSI BLOKIR (Tambahkan di bawah loadUserList) ---
+    window.doToggleBlock = async (username, currentStatus) => {
+      const actionText = currentStatus ? "Membuka blokir" : "Memblokir";
+      if (confirm(`${actionText} user ${username}?`)) {
+        try {
+          await update(ref(db, 'users/' + username), { isBlocked: !currentStatus });
+          alert(`Berhasil! ${username} telah ${currentStatus ? 'dipulihkan' : 'diblokir'}.`);
+          window.loadUserList(); // Refresh tabel
+        } catch (e) { alert("Gagal memperbarui status."); }
+      }
     };
 
     // --- AKSI: CEK DETAIL USER ---

@@ -1311,7 +1311,117 @@
       border: 1px solid #ffcdd2;
     }
 
-    /* Label status blokir */
+    .todo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-bottom: 1px solid #f5f5f5;
+      transition: all 0.2s;
+    }
+
+    .todo-item:hover {
+      background: #fff9fb;
+    }
+
+    .todo-text {
+      font-size: 14px;
+      color: #333;
+      flex: 1;
+    }
+
+    .todo-text.completed {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .badge-todo {
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      border: none;
+      transition: transform 0.2s;
+    }
+
+    .badge-todo:active {
+      transform: scale(0.9);
+    }
+
+    .badge-pending {
+      background: #ffebee;
+      color: #f44336;
+    }
+
+    .badge-done {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .btn-delete-todo {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 16px;
+    }
+
+    .btn-delete-todo:hover {
+      color: #f44336;
+    }
+
+    /* Style tambahan khusus Tabel Rencana */
+    .todo-row-done {
+      background-color: #f9f9f9;
+    }
+
+    .todo-text-done {
+      text-decoration: line-through;
+      color: #aaa !important;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      text-align: center;
+      min-width: 100px;
+      transition: all 0.2s;
+    }
+
+    .status-pending {
+      background: #ffebee;
+      color: #f44336;
+    }
+
+    .status-pending:hover {
+      background: #f44336;
+      color: #fff;
+    }
+
+    .status-done {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status-done:hover {
+      background: #2e7d32;
+      color: #fff;
+    }
+
+    .todo-user-tag {
+      display: block;
+      font-size: 10px;
+      color: #999;
+      font-weight: normal;
+      margin-top: 4px;
+    }
   </style>
 </head>
 
@@ -1402,6 +1512,7 @@
     </div>
     <div class="nav-links" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
       <a href="#galeri">Galeri</a>
+      <a href="#rencana-main">Jadwal Main</a>
       <a href="#info">Info</a>
       <a href="#kutipan">Inspirasi</a>
       <span class="nav-user">
@@ -1459,6 +1570,38 @@
       <div class="section-title">Galeri Foto</div>
       <p class="section-sub">Klik gambar mana saja untuk melihat detail dan animasi love!</p>
       <div class="gallery-grid" id="gallery"></div>
+    </section>
+
+    <section class="section" id="rencana-main">
+      <div class="section-title">Rencana Main Bareng</div>
+      <p class="section-sub">Tuliskan ide atau rencana seru kita di sini!</p>
+
+      <div class="container"
+        style="max-width: 800px; background: #fff; padding: 2rem; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+        <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+          <input type="text" id="todo-input" placeholder="Contoh: Nonton bioskop minggu depan..."
+            style="flex: 1; padding: 14px; border: 1.5px solid #eee; border-radius: 12px; outline: none; font-family: inherit;">
+          <button onclick="addTodo()"
+            style="background: #e91e8c; color: #fff; border: none; padding: 0 25px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.2s;">✨
+            Tambah</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="admin-table" style="margin-top: 0;">
+            <thead>
+              <tr>
+                <th style="width: 50%;">Rencana</th>
+                <th style="text-align: center;">Status</th>
+                <th style="text-align: center;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="todo-table-body">
+            </tbody>
+          </table>
+        </div>
+        <div id="todo-empty-msg" style="text-align: center; padding: 20px; color: #bbb; display: none;">Belum ada
+          rencana main.</div>
+      </div>
     </section>
 
     <!-- INFO -->
@@ -1972,6 +2115,91 @@
     function stopHearts() { running = false; canvas.classList.remove('active'); if (animId) cancelAnimationFrame(animId); ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
     window.addEventListener('resize', resizeCanvas);
+
+    import { onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const todoRef = ref(db, 'todoList');
+
+    // 1. Fungsi Tambah Rencana
+    window.addTodo = async function () {
+      const input = document.getElementById('todo-input');
+      const text = input.value.trim();
+      const session = JSON.parse(localStorage.getItem('amelia_session'));
+
+      if (!text) {
+        alert("Tuliskan rencananya dulu ya!");
+        return;
+      }
+
+      try {
+        await push(todoRef, {
+          task: text,
+          status: 'pending',
+          createdBy: (session.name || session.username),
+          createdAt: new Date().toISOString()
+        });
+        input.value = '';
+      } catch (e) { console.error(e); }
+    };
+
+    // 2. Fungsi Klik Status (Ubah Selesai/Belum)
+    window.toggleTodo = async function (id, currentStatus) {
+      const newStatus = currentStatus === 'pending' ? 'done' : 'pending';
+      try {
+        await update(ref(db, `todoList/${id}`), { status: newStatus });
+      } catch (e) { console.error(e); }
+    };
+
+    // 3. Fungsi Hapus Rencana
+    window.deleteTodo = async function (id) {
+      if (confirm("Hapus rencana ini dari tabel?")) {
+        try {
+          await remove(ref(db, `todoList/${id}`));
+        } catch (e) { console.error(e); }
+      }
+    };
+
+    // 4. Sinkronisasi Tabel secara Real-time
+    onValue(todoRef, (snapshot) => {
+      const tbody = document.getElementById('todo-table-body');
+      const emptyMsg = document.getElementById('todo-empty-msg');
+      tbody.innerHTML = '';
+
+      if (snapshot.exists()) {
+        emptyMsg.style.display = 'none';
+        const data = snapshot.val();
+
+        // Urutkan dari yang terbaru (menggunakan Object.entries)
+        const items = Object.entries(data).reverse();
+
+        items.forEach(([id, item]) => {
+          const isDone = item.status === 'done';
+          const row = document.createElement('tr');
+          if (isDone) row.className = 'todo-row-done';
+
+          row.innerHTML = `
+        <td>
+          <span style="font-weight: 600; color: #333;" class="${isDone ? 'todo-text-done' : ''}">
+            ${item.task}
+          </span>
+          <span class="todo-user-tag">👤 Oleh: ${item.createdBy}</span>
+        </td>
+        <td style="text-align: center;">
+          <button class="badge-status ${isDone ? 'status-done' : 'status-pending'}" 
+                  onclick="toggleTodo('${id}', '${item.status}')">
+            ${isDone ? '✅ Selesai' : '⏳ Belum'}
+          </button>
+        </td>
+        <td style="text-align: center;">
+          <button class="btn-delete" onclick="deleteTodo('${id}')" style="padding: 5px 8px;">🗑️</button>
+        </td>
+      `;
+          tbody.appendChild(row);
+        });
+      } else {
+        emptyMsg.style.display = 'block';
+      }
+    });
   </script>
 </body>
 

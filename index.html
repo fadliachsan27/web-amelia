@@ -48,9 +48,9 @@
       background: #f8f9fb;
       color: #222;
       min-height: 100vh;
+      padding-top: 60px;
     }
 
-    /* NAV */
     nav {
       background: #fff;
       border-bottom: 1px solid #eee;
@@ -59,10 +59,13 @@
       align-items: center;
       justify-content: space-between;
       height: 60px;
-      position: sticky;
+      position: fixed;
       top: 0;
-      z-index: 100;
+      left: 0;
+      right: 0;
+      z-index: 1000;
     }
+
 
     .nav-logo {
       font-size: 1.2rem;
@@ -1422,6 +1425,184 @@
       font-weight: normal;
       margin-top: 4px;
     }
+
+    /* ===== HAMBURGER MENU (MOBILE ONLY) ===== */
+    .hamburger-btn {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 38px;
+      height: 38px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .hamburger-btn:hover {
+      background: #fce4ec;
+    }
+
+    .hamburger-btn span {
+      display: block;
+      width: 22px;
+      height: 2.5px;
+      background: #e91e8c;
+      border-radius: 3px;
+      transition: all 0.3s;
+    }
+
+    .hamburger-btn.open span:nth-child(1) {
+      transform: translateY(7.5px) rotate(45deg);
+    }
+
+    .hamburger-btn.open span:nth-child(2) {
+      opacity: 0;
+      transform: scaleX(0);
+    }
+
+    .hamburger-btn.open span:nth-child(3) {
+      transform: translateY(-7.5px) rotate(-45deg);
+    }
+
+    /* Mobile dropdown menu */
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 60px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      box-shadow: 0 8px 24px rgba(233,30,140,0.10);
+      z-index: 999;
+      padding: 0.5rem 1.2rem 1rem;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .mobile-menu.open {
+      display: flex;
+    }
+
+    .mobile-menu a {
+      text-decoration: none;
+      color: #333;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 12px 4px;
+      border-bottom: 1px solid #f5f5f5;
+      display: block;
+      transition: color 0.2s;
+    }
+
+    .mobile-menu a:last-of-type {
+      border-bottom: none;
+    }
+
+    .mobile-menu a:hover {
+      color: #e91e8c;
+    }
+
+    .mobile-menu-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 4px 8px;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .mobile-menu-logout {
+      font-size: 13px;
+      color: #999;
+      cursor: pointer;
+      border: 1px solid #eee;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: none;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      transition: all 0.2s;
+    }
+
+    .mobile-menu-logout:hover {
+      color: #e91e8c;
+      border-color: #e91e8c;
+    }
+
+    /* ===== RESPONSIVE FIXES ===== */
+    @media (max-width: 768px) {
+      /* Sembunyikan nav-links di mobile, tampilkan hamburger */
+      .nav-links {
+        display: none !important;
+      }
+
+      .hamburger-btn {
+        display: flex;
+      }
+
+      /* Fix section rencana main agar tidak overflow */
+      #rencana-main .container,
+      section#rencana-main > .container {
+        padding: 1rem !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 16px !important;
+      }
+
+      /* Fix todo card inner container */
+      .todo-card-wrap {
+        padding: 1rem !important;
+      }
+
+      /* Input + tombol tambah: stack di mobile */
+      .todo-input-row {
+        flex-direction: column !important;
+      }
+
+      .todo-input-row input {
+        width: 100% !important;
+      }
+
+      .todo-input-row button {
+        width: 100% !important;
+        padding: 12px !important;
+      }
+
+      /* Tabel tidak overflow ke kanan */
+      .todo-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+      }
+
+      .admin-table {
+        min-width: 320px;
+      }
+
+      /* Fix hero */
+      .hero h1 {
+        font-size: 1.7rem;
+      }
+
+      /* Container global */
+      .container {
+        padding: 0 1rem;
+      }
+
+      /* Fix inner todo container inline style override */
+      section#rencana-main > .container > div[style] {
+        padding: 1rem !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+      }
+    }
   </style>
 </head>
 
@@ -1532,6 +1713,28 @@
         </div>
       </span>
     </div>
+
+    <!-- HAMBURGER BUTTON (mobile only) -->
+    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- MOBILE DROPDOWN MENU -->
+    <div class="mobile-menu" id="mobile-menu">
+      <a href="#galeri" onclick="closeMobileMenu()">📷 Galeri</a>
+      <a href="#rencana-main" onclick="closeMobileMenu()">📅 Jadwal Main</a>
+      <a href="#info" onclick="closeMobileMenu()">💡 Info</a>
+      <a href="#kutipan" onclick="closeMobileMenu()">✨ Inspirasi</a>
+      <div class="mobile-menu-user">
+        <span class="nav-user-name" id="nav-username-mobile">👤 Tamu</span>
+        <span class="nav-user-badge" id="nav-role-badge-mobile"
+          style="display:none; background: #ff4081; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; cursor: pointer;"
+          onclick="handleAdminClick()">ADMIN</span>
+        <button class="mobile-menu-logout" onclick="doLogout()">Keluar</button>
+      </div>
+    </div>
   </nav>
 
   <div id="admin-panel"
@@ -1576,9 +1779,9 @@
       <div class="section-title">Rencana Main Bareng</div>
       <p class="section-sub">Tuliskan ide atau rencana seru kita di sini!</p>
 
-      <div class="container"
+      <div class="container todo-card-wrap"
         style="max-width: 800px; background: #fff; padding: 2rem; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-        <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+        <div class="todo-input-row" style="display: flex; gap: 10px; margin-bottom: 25px;">
           <input type="text" id="todo-input" placeholder="Contoh: Nonton bioskop minggu depan..."
             style="flex: 1; padding: 14px; border: 1.5px solid #eee; border-radius: 12px; outline: none; font-family: inherit;">
           <button onclick="addTodo()"
@@ -1586,7 +1789,7 @@
             Tambah</button>
         </div>
 
-        <div style="overflow-x: auto;">
+        <div class="todo-table-wrap" style="overflow-x: auto;">
           <table class="admin-table" style="margin-top: 0;">
             <thead>
               <tr>
@@ -1958,7 +2161,12 @@
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('nav-username').textContent = '👤 ' + (userData.name || userData.username);
 
+        // Sync mobile menu username
+        const mobileUsername = document.getElementById('nav-username-mobile');
+        if (mobileUsername) mobileUsername.textContent = '👤 ' + (userData.name || userData.username);
+
         const roleBadge = document.getElementById('nav-role-badge');
+        const roleBadgeMobile = document.getElementById('nav-role-badge-mobile');
         const adminArea = document.getElementById('admin-access-area');
 
         if (userData.role === 'admin') {
@@ -1967,10 +2175,12 @@
           roleBadge.textContent = 'ADMIN ⚙️';
           adminArea.style.cursor = 'pointer';
           adminArea.title = 'Klik untuk buka Panel Admin';
+          if (roleBadgeMobile) { roleBadgeMobile.style.display = 'inline-block'; roleBadgeMobile.textContent = 'ADMIN ⚙️'; }
         } else {
           roleBadge.style.display = 'none';
           adminArea.style.cursor = 'default';
           adminArea.onclick = null; // Pengguna biasa tidak bisa klik
+          if (roleBadgeMobile) roleBadgeMobile.style.display = 'none';
         }
       }
     };
@@ -1987,6 +2197,27 @@
         console.log("Akses ditolak: Anda bukan admin.");
       }
     };
+
+    // ===== HAMBURGER MENU =====
+    window.toggleMobileMenu = function () {
+      const menu = document.getElementById('mobile-menu');
+      const btn = document.getElementById('hamburger-btn');
+      menu.classList.toggle('open');
+      btn.classList.toggle('open');
+    };
+
+    window.closeMobileMenu = function () {
+      document.getElementById('mobile-menu').classList.remove('open');
+      document.getElementById('hamburger-btn').classList.remove('open');
+    };
+
+    // Tutup mobile menu saat klik di luar navbar
+    document.addEventListener('click', function (e) {
+      const nav = document.querySelector('nav');
+      if (!nav.contains(e.target)) {
+        closeMobileMenu();
+      }
+    });
 
     // =====================================================
     // GALLERY
